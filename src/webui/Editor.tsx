@@ -139,16 +139,17 @@ export const Editor: Component<EditorProps> = props => {
     });
 
     return <div class="flex flex-col h-full">
-        <div class="flex-1 overflow-hidden">
-            <main
-                class="w-full h-full overflow-hidden theme-scrollbar" style={{ contain: "strict" }}
-                ref={editor} />
-        </div>
         <Show when={props.editorBlockedMsg}>
             <div class="font-semibold text-sm pl-2 py-1 flex items-center gap-2 theme-bg-debugging ">
                 <span>{props.editorBlockedMsg}</span>
             </div>
         </Show>
+
+        <div class="flex-1 overflow-hidden">
+            <main
+                class="w-full h-full overflow-hidden theme-scrollbar" style={{ contain: "strict" }}
+                ref={editor} />
+        </div>
     </div>
 }
 
