@@ -130,7 +130,7 @@ export const MemoryView: Component<{ version: () => any, writeAddr: number, writ
             {/* Table Headers */}
             <Show when={activeTab() != "frames"}>
                 <div class="theme-mono ml-2 theme-fg2">
-                    <a class="inline-block" style={{ width: charWidth() * 10 + "px"}}>addr</a>
+                    <a class="inline-block" style={{ width: charWidth() * 10 + "px" }}>addr</a>
                     <a>{activeTab() == "disasm" ? "instructions" : "data"}</a>
                 </div>
             </Show>
@@ -151,7 +151,7 @@ export const MemoryView: Component<{ version: () => any, writeAddr: number, writ
                 </Show>
             </Portal>
 
-            <div ref={parentRef} class="theme-mono text-lg overflow-y-auto overflow-x-hidden theme-scrollbar ml-2">
+            <div ref={parentRef} class="theme-mono text-lg overflow-y-auto overflow-x-auto theme-scrollbar ml-2">
                 <div ref={dummyChar} class="invisible absolute">0</div>
 
                 <Show when={activeTab() == "frames"}>
@@ -238,7 +238,7 @@ export const MemoryView: Component<{ version: () => any, writeAddr: number, writ
                                                     <span
                                                         class={style + " cursor-default text-right tabular-nums whitespace-pre"}
                                                         style={{
-                                                            "margin-right": `${cellWidth - str.length}ch`,
+                                                            "margin-right": (i != chunks - 1) ? `${cellWidth - str.length}ch` : "0",
                                                             "display": "inline-block"
                                                         }}
                                                         onMouseEnter={(e) => {

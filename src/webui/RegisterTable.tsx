@@ -40,8 +40,8 @@ export const RegisterTable: Component<{ pc: number, regs: number[], regWritten: 
   // now i have the precise size in a font-independent format, as long as it's monospace
   return (
     <div class="overflow-hidden flex-grow h-full self-start flex-shrink flex flex-col">
-      <div class="flex-none flex items-center justify-end theme-gutter border-b theme-border h-9">
-        <div class="flex items-center gap-1">
+      <div class="flex-none flex items-center justify-end theme-gutter border-b theme-border min-h-9">
+        <div class="flex flex-wrap items-center gap-1">
           <select
             class="font-semibold theme-fg theme-gutter px-2 rounded theme-border focus:outline-none cursor-pointer"
             title="Memory unit size"

@@ -15,13 +15,13 @@ function updateCss(colors: Colors): void {
 	background-color: ${colors.bgorange0};
 }
 .theme-mono {
-    font-family: "Consolas", "Lucida Console", "Courier New", monospace;
+    font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
 }
 .cm-editor .cm-content  {
-    font-family: "Consolas", "Lucida Console", "Courier New", monospace;
+    font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
 }
 .cm-gutterElement   {
-    font-family: "Consolas", "Lucida Console", "Courier New", monospace;
+    font-family: SFMono-Regular, Consolas, Liberation Mono, Menlo, monospace;
 }
 .cm-tooltip-lint {
 	color: ${colors.base5};
