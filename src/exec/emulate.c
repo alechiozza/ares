@@ -566,65 +566,73 @@ end:
     return;
 }
 
-static size_t u32_to_str(uint32_t val, char *buf, size_t buflen) {
-    if (buflen == 0) return 0;
-    char tmp[11];
-    int i = 0;
+static size_t u32_to_str(u32 val, char buf[11]) {
+    char tmp[10];
+    size_t i = 0;
     if (val == 0) {
-        if (buflen > 1) {
-            buf[0] = '0';
-            buf[1] = '\0';
-            return 1;
-        } else return 0;
+        buf[0] = '0';
+        buf[1] = '\0';
+        return 1;
     }
-    while (val && i < 10) {
-        tmp[i++] = '0' + (val % 10);
+    while (val) {
+        tmp[i++] = (char)('0' + (val % 10));
         val /= 10;
     }
-    size_t n = 0;
-    while (i-- && n + 1 < buflen) {
-        buf[n++] = tmp[i];
-    }
-    if (n < buflen) buf[n] = '\0';
-    return n;
+    for (size_t j = 0; j < i; ++j) buf[j] = tmp[i - 1 - j];
+    buf[i] = '\0';
+    return i;
 }
 
-static size_t i32_to_str(int32_t val, char *buf, size_t buflen) {
-    if (buflen == 0) return 0;
+static size_t i32_to_str(i32 val, char buf[12]) {
     if (val < 0) {
-        if (buflen < 2) return 0;
         buf[0] = '-';
-        size_t n = u32_to_str((uint32_t)(-val), buf + 1, buflen - 1);
-        return n + 1;
-    } else {
-        return u32_to_str((uint32_t)val, buf, buflen);
+        return 1 + u32_to_str((u32)(-(i64)val), buf + 1);
     }
+    return u32_to_str((u32)val, buf);
 }
 
-size_t disassemble(uint32_t inst, char *buf, size_t buflen) {
+static size_t u32_to_str_hex(u32 val, char buf[11]) {
+    const char *digits = "0123456789abcdef";
+    char tmp[8];
+    size_t i = 0;
+    buf[0] = '0';
+    buf[1] = 'x';
+    if (val == 0) {
+        buf[2] = '0';
+        buf[3] = '\0';
+        return 3;
+    }
+    while (val) {
+        tmp[i++] = digits[val & 0xF];
+        val >>= 4;
+    }
+    for (size_t j = 0; j < i; ++j) buf[2 + j] = tmp[i - 1 - j];
+    buf[2 + i] = '\0';
+    return 2 + i;
+}
+
+size_t disassemble(u32 inst, char *buf, size_t buflen) {
     if (buflen == 0) return 0;
     buf[0] = '\0';
     size_t pos = 0;
 
-    uint32_t rd = extr(inst, 11, 7);
-    uint32_t rs1 = extr(inst, 19, 15);
-    uint32_t rs2 = extr(inst, 24, 20);
-    uint32_t funct7 = extr(inst, 31, 25);
-    uint32_t funct3 = extr(inst, 14, 12);
+    u32 rd = extr(inst, 11, 7);
+    u32 rs1 = extr(inst, 19, 15);
+    u32 rs2 = extr(inst, 24, 20);
+    u32 funct7 = extr(inst, 31, 25);
+    u32 funct3 = extr(inst, 14, 12);
 
-    int32_t btype =
-        sext((extr(inst, 31, 31) << 12) | (extr(inst, 7, 7) << 11) |
-                 (extr(inst, 30, 25) << 5) | (extr(inst, 11, 8) << 1),
-             13);
-    int32_t stype = sext((extr(inst, 31, 25) << 5) | (extr(inst, 11, 7)), 12);
-    int32_t jtype =
-        sext((extr(inst, 31, 31) << 20) | (extr(inst, 19, 12) << 12) |
-                 (extr(inst, 20, 20) << 11) | (extr(inst, 30, 21) << 1),
-             21);
-    int32_t itype = sext(extr(inst, 31, 20), 12);
-    uint32_t utype = extr(inst, 31, 12) << 12;
+    i32 btype = sext((extr(inst, 31, 31) << 12) | (extr(inst, 7, 7) << 11) |
+                         (extr(inst, 30, 25) << 5) | (extr(inst, 11, 8) << 1),
+                     13);
+    i32 stype = sext((extr(inst, 31, 25) << 5) | (extr(inst, 11, 7)), 12);
+    i32 jtype = sext((extr(inst, 31, 31) << 20) | (extr(inst, 19, 12) << 12) |
+                         (extr(inst, 20, 20) << 11) | (extr(inst, 30, 21) << 1),
+                     21);
+    i32 itype = sext(extr(inst, 31, 20), 12);
+    u32 utype = extr(inst, 31, 12) << 12;
 
-    uint32_t opcode = extr(inst, 6, 0);
+    u32 opcode = extr(inst, 6, 0);
 
 #define APPEND_STR(s)                                       \
     do {                                                    \
@@ -632,28 +640,40 @@ size_t disassemble(uint32_t inst, char *buf, size_t buflen) {
         while (*_p && pos + 1 < buflen) buf[pos++] = *_p++; \
     } while (0)
 
-#define APPEND_U32(x)                                      \
-    do {                                                   \
-        char tmp[12];                                      \
-        u32_to_str(x, tmp, sizeof(tmp));                   \
-        for (size_t _i = 0; tmp[_i] && pos < buflen; _i++) \
-            buf[pos++] = tmp[_i];                          \
+#define APPEND_U32(x)                                          \
+    do {                                                       \
+        char tmp[11];                                          \
+        u32_to_str(x, tmp);                                    \
+        for (size_t _i = 0; tmp[_i] && pos + 1 < buflen; _i++) \
+            buf[pos++] = tmp[_i];                              \
     } while (0)
 
-#define APPEND_I32(x)                                      \
-    do {                                                   \
-        char tmp[12];                                      \
-        i32_to_str(x, tmp, sizeof(tmp));                   \
-        for (size_t _i = 0; tmp[_i] && pos < buflen; _i++) \
-            buf[pos++] = tmp[_i];                          \
+#define APPEND_U32_HEX(x)                                      \
+    do {                                                       \
+        char tmp[11];                                          \
+        u32_to_str_hex(x, tmp);                                \
+        for (size_t _i = 0; tmp[_i] && pos + 1 < buflen; _i++) \
+            buf[pos++] = tmp[_i];                              \
+    } while (0)
+
+#define APPEND_I32(x)                                          \
+    do {                                                       \
+        char tmp[12];                                          \
+        i32_to_str(x, tmp);                                    \
+        for (size_t _i = 0; tmp[_i] && pos + 1 < buflen; _i++) \
+            buf[pos++] = tmp[_i];                              \
     } while (0)
 
     // LUI
     if (opcode == 0b0110111) {
+        // to match with RARS,
+        // li a0, 0xaabbccdd must be shown as
+        // lui x10, 0xfffaabbd
+        // addi x10, 0xfffffcdd
         APPEND_STR("lui x");
         APPEND_U32(rd);
         APPEND_STR(", ");
-        APPEND_U32(utype);
+        APPEND_U32_HEX((u32)((i32)utype >> 12));
         goto done;
     }
 
@@ -662,7 +682,7 @@ size_t disassemble(uint32_t inst, char *buf, size_t buflen) {
         APPEND_STR("auipc x");
         APPEND_U32(rd);
         APPEND_STR(", ");
-        APPEND_U32(utype);
+        APPEND_U32_HEX((u32)((i32)utype >> 12));
         goto done;
     }
 
@@ -761,7 +781,7 @@ size_t disassemble(uint32_t inst, char *buf, size_t buflen) {
         APPEND_U32(rs1);
         APPEND_STR(", ");
         if (shift) APPEND_U32(itype & 31);
-        else APPEND_I32(itype);
+        else APPEND_U32_HEX((u32)itype);
         goto done;
     }
 
@@ -799,8 +819,7 @@ size_t disassemble(uint32_t inst, char *buf, size_t buflen) {
     // SYSTEM
     if (opcode == 0x73) {
         const char *name = "";
-        uint32_t csr =
-            extr(inst, 31, 20);  // CSR address is in the immediate field
+        u32 csr = extr(inst, 31, 20);  // CSR address is in the immediate field
 
         if (funct3 == 0b000) {
             if (itype == 0x102) name = "sret";
@@ -877,7 +896,7 @@ u32 emu_load(u32 addr, int size) {
 
 char g_emu_disassemble_buf[64];
 
-size_t emu_disassemble(uint32_t inst) {
+size_t emu_disassemble(u32 inst) {
     return disassemble(inst, g_emu_disassemble_buf, 64);
 }
 
