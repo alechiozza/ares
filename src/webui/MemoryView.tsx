@@ -127,13 +127,10 @@ export const MemoryView: Component<{ version: () => any, writeAddr: number, writ
         <div class="h-full flex flex-col overflow-hidden" onMouseDown={() => setAddrSelect(-1)}>
             <TabSelector tab={activeTab()} setTab={setActiveTab} tabs={[".text", "disasm", ".data", "stack", "frames"]} />
 
-            {/* Table Headers */}
-            <Show when={activeTab() != "frames"}>
-                <div class="theme-mono ml-2 theme-fg2">
-                    <a class="inline-block" style={{ width: charWidth() * 10 + "px" }}>addr</a>
-                    <a>{activeTab() == "disasm" ? "instructions" : "data"}</a>
-                </div>
-            </Show>
+            <div class="font-semibold theme-mono ml-2 theme-fg2">
+                <a class="theme-style6 inline-block" style={{ width: charWidth() * 10 + "px" }}>address</a>
+                <a>{activeTab() == "disasm" ? "instructions" : "contents"}</a>
+            </div>
 
             <Portal mount={document.body}>
                 <Show when={hoveredNumber() !== null}>
@@ -170,7 +167,7 @@ export const MemoryView: Component<{ version: () => any, writeAddr: number, writ
                                     class={"flex flex-row items-center w-full " + (props.version() && (TEXT_BASE + virtRow.index * 4 == props.pc) ? "cm-debugging" : "")}
                                 >
                                     <div
-                                        class={"shrink-0 w-[10ch] tabular-nums " + ((addrSelect() == virtRow.index) ? "select-text " : "select-none ") + ((TEXT_BASE + virtRow.index * 4 == props.pc) ? "theme-fg" : "theme-fg2")}
+                                        class={"theme-style6 shrink-0 w-[10ch] tabular-nums " + ((addrSelect() == virtRow.index) ? "select-text " : "select-none ") + ((TEXT_BASE + virtRow.index * 4 == props.pc) ? "theme-fg" : "theme-fg2")}
                                         onMouseDown={(e) => { setAddrSelect(virtRow.index); e.stopPropagation(); }}>
                                         {(TEXT_BASE + virtRow.index * 4).toString(16).padStart(8, "0")}
                                     </div>
@@ -197,7 +194,7 @@ export const MemoryView: Component<{ version: () => any, writeAddr: number, writ
                                 >
                                     {/* Address Column */}
                                     <div
-                                        class={"theme-fg2 shrink-0 w-[10ch] tabular-nums " + ((addrSelect() == virtRow.index) ? "select-text" : "select-none")}
+                                        class={"theme-style6 theme-fg2 shrink-0 w-[10ch] tabular-nums " + ((addrSelect() == virtRow.index) ? "select-text" : "select-none")}
                                         onMouseDown={(e) => { setAddrSelect(virtRow.index); e.stopPropagation(); }}>
                                         {(getStartAddr() + virtRow.index * (chunksPerLine() - 1) * 4).toString(16).padStart(8, "0")}
                                     </div>
@@ -284,7 +281,7 @@ const ShadowStack: Component<{ version: () => any, shadowStackAugmented: ShadowS
                 <For each={elem.elems}>
                     {(e) => (
                         <div class="flex flex-row">
-                            <a class="theme-fg2 pr-2 w-[10ch] tabular-nums">{e.addr}</a>
+                            <a class="theme-style6 pr-2 w-[10ch] tabular-nums">{e.addr}</a>
                             <div class={(e.isAnimated ? "animate-fade-highlight " : "") + "tabular-nums"}>{e.text}</div>
                         </div>
                     )}
