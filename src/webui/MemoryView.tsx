@@ -27,8 +27,6 @@ export const MemoryView: Component<{ version: () => any, writeAddr: number, writ
     const [chunksPerLine, setChunksPerLine] = createSignal<number>(1);
     const [lineCount, setLineCount] = createSignal<number>(0);
     const [addrSelect, setAddrSelect] = createSignal<number>(-1);
-    const [hoveredNumber, setHoveredNumber] = createSignal<number | null>(null);
-    const [mousePos, setMousePos] = createSignal<{ x: number, y: number }>({ x: 0, y: 0 });
 
     const getUnitBytes = () => unitSize() === "byte" ? 1 : unitSize() === "half" ? 2 : 4;
 
@@ -141,21 +139,6 @@ export const MemoryView: Component<{ version: () => any, writeAddr: number, writ
                 <a>{activeTab() == "disasm" ? "instructions" : "contents"}</a>
             </div>
 
-            <Portal mount={document.body}>
-                <Show when={hoveredNumber() !== null}>
-                    <div
-                        class="absolute theme-fg theme-gutter text-xs px-1 py-0.5 pointer-events-none z-50 border theme-border"
-                        style={{ top: `${mousePos().y + 3}px`, left: `${mousePos().x + 3}px`, position: "fixed" }}
-                    >
-                        {(() => {
-                            let num = hoveredNumber()!;
-                            let text = String(num);
-                            if (unitSize() == "byte" && num >= 32 && num <= 126) text += " (" + String.fromCharCode(num) + ")";
-                            return text;
-                        })()}
-                    </div>
-                </Show>
-            </Portal>
 
             <div ref={parentRef} class="theme-mono text-lg overflow-y-auto overflow-x-auto theme-scrollbar ml-2">
                 <div ref={dummyChar} class="invisible absolute">0</div>
@@ -239,7 +222,7 @@ export const MemoryView: Component<{ version: () => any, writeAddr: number, writ
                                                 else if (isFp) style = "fp-highlight";
                                                 // Use max width for consistent layout
                                                 const cellWidth = getCellWidthChars(bytesPerUnit);
-                                                
+
                                                 const str = formatMemoryValue(loadWrapper(props.load, ptr, bytesPerUnit), bytesPerUnit);
                                                 components.push(
                                                     <span
@@ -248,12 +231,6 @@ export const MemoryView: Component<{ version: () => any, writeAddr: number, writ
                                                             "margin-right": (i != chunks - 1) ? `${cellWidth - str.length}ch` : "0",
                                                             "display": "inline-block"
                                                         }}
-                                                        onMouseEnter={(e) => {
-                                                            setHoveredNumber(loadWrapper(props.load, ptr, bytesPerUnit));
-                                                            setMousePos({ x: e.clientX, y: e.clientY });
-                                                        }}
-                                                        onMouseMove={(e) => setMousePos({ x: e.clientX, y: e.clientY })}
-                                                        onMouseLeave={() => setHoveredNumber(null)}
                                                     >
                                                         {str}
                                                     </span>
