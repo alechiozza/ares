@@ -366,8 +366,11 @@ int parse_reg(Parser *p) {
     parse_ident(p, &str, &len);
 
     if ((len == 2 || len == 3) && (str[0] == 'x' || str[0] == 'X')) {
-        if (len == 2) return str[1] - '0';
-        else {
+        if (len == 2) {
+            int num = str[1] - '0';
+            if (num < 0 || num > 9) return -1;
+            return num;
+        } else {
             int num = (str[1] - '0') * 10 + (str[2] - '0');
             if (num >= 32) return -1;
             return num;
