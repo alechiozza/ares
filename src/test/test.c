@@ -727,6 +727,126 @@ _start:             \n\
     check_pc_at_label("E");
 }
 
+void test_callsan_stack_poison_fresh() {
+    build_and_run("\
+fn:                 \n\
+    addi sp, sp, -4 \n\
+E:  lw t0, 0(sp)    \n\
+    addi sp, sp, 4  \n\
+    ret             \n\
+.globl _start       \n\
+_start:             \n\
+    jal fn          \n\
+");
+    TEST_ASSERT_EQUAL(g_runtime_error_type, ERROR_CALLSAN_LOAD_STACK);
+    check_pc_at_label("E");
+}
+
+void test_callsan_stack_poison_after_ret() {
+    build_and_run("\
+fn:                 \n\
+    addi sp, sp, -4 \n\
+    sw ra, 0(sp)    \n\
+    lw ra, 0(sp)    \n\
+    addi sp, sp, 4  \n\
+    ret             \n\
+.globl _start       \n\
+_start:             \n\
+    jal fn          \n\
+E:  lw t1, -4(sp)   \n\
+");
+    TEST_ASSERT_EQUAL(g_runtime_error_type, ERROR_CALLSAN_LOAD_STACK);
+    check_pc_at_label("E");
+}
+
+void test_callsan_stack_poison_second_call() {
+    build_and_run("\
+fn:                 \n\
+    addi sp, sp, -4 \n\
+    sw ra, 0(sp)    \n\
+    lw ra, 0(sp)    \n\
+    addi sp, sp, 4  \n\
+    ret             \n\
+fn_wrong:           \n\
+    addi sp, sp, -4 \n\
+E:  lw ra, 0(sp)    \n\
+    addi sp, sp, 4  \n\
+    ret             \n\
+.globl _start       \n\
+_start:             \n\
+    jal fn          \n\
+    jal fn_wrong    \n\
+");
+    TEST_ASSERT_EQUAL(g_runtime_error_type, ERROR_CALLSAN_LOAD_STACK);
+    check_pc_at_label("E");
+}
+
+void test_callsan_t_clobbered_inside() {
+    build_and_run("\
+fn:                 \n\
+    li t0, 99       \n\
+    ret             \n\
+.globl _start       \n\
+_start:             \n\
+    li t0, 1        \n\
+    jal fn          \n\
+E:  addi t0, t0, 1  \n\
+");
+    TEST_ASSERT_EQUAL(g_runtime_error_type, ERROR_CALLSAN_CANTREAD);
+    TEST_ASSERT_EQUAL(g_runtime_error_params[0], REG_T0);
+    check_pc_at_label("E");
+}
+
+void test_callsan_caller_after_ret() {
+    build_and_run("\
+fn:                 \n\
+    ret             \n\
+.globl _start       \n\
+_start:             \n\
+    addi sp, sp, -4 \n\
+    sw s0, 0(sp)    \n\
+    li s0, 42       \n\
+    jal fn          \n\
+    lw s0, 0(sp)    \n\
+    addi sp, sp, 4  \n\
+    li a7, 93       \n\
+    ecall           \n\
+");
+    TEST_ASSERT_EQUAL(g_runtime_error_type, ERROR_NONE);
+}
+
+void test_callsan_arg_clobbered_outside() {
+    build_and_run("\
+fn:                 \n\
+    li a0, 100      \n\
+    ret             \n\
+.globl _start       \n\
+_start:             \n\
+    li a2, 50       \n\
+    jal fn          \n\
+E:  mv t0, a2       \n\
+");
+    TEST_ASSERT_EQUAL(g_runtime_error_type, ERROR_CALLSAN_CANTREAD);
+    TEST_ASSERT_EQUAL(g_runtime_error_params[0], REG_A2);
+    check_pc_at_label("E");
+}
+
+void test_callsan_two_return_values() {
+    build_and_run("\
+fn:                 \n\
+    li a0, 42       \n\
+    li a1, 7        \n\
+    ret             \n\
+.globl _start       \n\
+_start:             \n\
+    jal fn          \n\
+    add t0, a0, a1  \n\
+    li a7, 93       \n\
+    ecall           \n\
+");
+    TEST_ASSERT_EQUAL(g_runtime_error_type, ERROR_NONE);
+}
+
 void test_registers_and_arithmetic(void) {
     build_and_run("\
 .globl _start\n\

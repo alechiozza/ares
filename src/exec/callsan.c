@@ -29,7 +29,7 @@ bool callsan_can_load(int reg) {
     return true;
 }
 
-void callsan_store(int reg) { g_reg_bitmap |= 1 << reg; }
+void callsan_store(int reg) { g_reg_bitmap |= 1u << reg; }
 
 const u32 CALLSAN_CALL_ACCESSIBLE =
     (1ul << REG_ZERO) | (1ul << REG_SP) | (1ul << REG_RA) | (1ul << REG_TP) |
@@ -40,6 +40,8 @@ const u32 CALLSAN_CALL_ACCESSIBLE =
     (1u << REG_S7) | (1u << REG_S8) | (1u << REG_S9) | (1u << REG_S10) |
     (1u << REG_S11);
 
+// *must* exclude A0 and A1 to allow return value passing
+// (A1 for 2-reg returns)
 const u32 CALLSAN_CALL_CLOBBERED =
     (1u << REG_T0) | (1u << REG_T1) | (1u << REG_T2) | (1u << REG_T3) |
     (1u << REG_T4) | (1u << REG_T5) | (1u << REG_T6) | (1u << REG_A2) |
@@ -99,7 +101,8 @@ bool callsan_ret() {
 
     // after a function return you cannot read the A (except A0 and A1) and T
     // registers since the function hypothetically may have clobbered them
-    g_reg_bitmap = e->reg_bitmap & ~CALLSAN_CALL_CLOBBERED;
+    u32 a0_a1_set = g_reg_bitmap & ((1ul << REG_A0) | (1ul << REG_A1));
+    g_reg_bitmap = (e->reg_bitmap & ~CALLSAN_CALL_CLOBBERED) | a0_a1_set;
 
     // rest of the stack is all poisoned
     u32 endidx = (e->sp - (STACK_TOP - STACK_LEN)) / 4;
