@@ -397,7 +397,11 @@ export class Emulator {
                     liveSp
                 :   raw[(i + 1) * SHADOW_STACK_ENT_SIZE + SHADOW_STACK_SP];
 
-            const elemCount = (frameSp - frameBase) / 4;
+            let elemCount = (frameSp - frameBase) / 4;
+            
+            // could happen on broken code if sp grows in the opposite direction
+            if (elemCount < 0) elemCount = 0;
+
             const elems = Array.from({ length: elemCount }, (_, j) => {
                 const ptr = frameSp - 4 - j * 4;
                 let text = convertNumber(this.load(ptr, 4), true);
